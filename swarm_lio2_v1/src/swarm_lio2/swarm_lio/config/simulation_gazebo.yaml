@@ -1,0 +1,71 @@
+common:
+    time_offset_lidar_imu: 0.0
+
+multiuav:
+    cluster_extraction_in_predict_region: true  # 是否开启普通聚类提取
+    inten_threshold: 200                       #高反射阈值
+    min_high_inten_cluster_size: 3            #最小高反射聚类点数
+    min_cluster_size: 3                       #最小普通聚类点数
+    predict_region_radius: 0.8                  #预测队友搜索队友周围点云范围。在这个球体内搜索点云
+    temp_predict_region_radius: 0.8            #临时跟踪时跟踪半径。在这个球体内搜索点云
+    traj_matching_start_thresh: 0.6           #轨迹匹配开始的阈值，运动程度多大则开始匹配  0.6
+    ave_match_error_thresh: 0.1                #平均误差小于多少被认为是队友
+    pos_num_in_traj: 200                        #预测队友时最大点云存储数
+    reset_tracker_thresh: 5                   #重置追踪器的时间阈值
+    valid_cluster_size_thresh: 1.5            #有效聚类大小阈值。如果大于这个值，认为不是无人机
+    valid_cluster_dist_thresh: 0.8             #有效聚类距离阈值。判断聚类是否属于该追踪器
+    mutual_observe_noise: 0.001
+    frame_num_in_sliding_window: 1
+    actual_uav_num: 2                     # ✅ 改为2架无人机
+    degeneration_thresh: 10
+
+imu_propagate:
+    enable: true                          # ✅ 启用IMU传播
+    topic: "/lidar_slam/imu_propagate"
+    filter_acc_en: true                   # ✅ 启用加速度滤波
+
+preprocess:
+    lidar_type: 6                         # ✅ 改为6
+    feature_extract_en: true              # ✅ 启用特征提取
+    scan_line: 6                        # ✅ Mid360有6线
+    blind: 0.8
+
+calibration:
+    cut_frame_en: false
+    cut_frame_num: 1
+    accumulate_frame_en: false
+    original_frequency: 10
+    gravity_align_enable: true            # ✅ 启用重力对齐
+    gravity_align_time: 10
+    PX4_R_I: [0.0, 0.0, 0.0]
+    PX4_p_I: [0.0, 0.0, 0.0]
+    level_horizon: [0.0, 0.0, 0.0]
+
+mapping:
+    imu_en: true
+    # ✅ 根据SDF中的IMU噪声调整
+    acc_cov: 0.01                        # 匹配SDF中的accelerometerNoiseDensity
+    gyr_cov: 0.01                        # 匹配SDF中的gyroscopeNoiseDensity
+    b_acc_cov: 0.0001
+    b_gyr_cov: 0.0001
+    det_range: 150
+    # ✅ 修正激光雷达到IMU的外参（z轴偏移0.1米）
+    LI_extrinsic_T: [0.0, 0.0, 0.1]       # SDF中livox安装在z=0.1
+    LI_extrinsic_R: [1, 0, 0,
+                     0, 1, 0,
+                     0, 0, 1]
+    point_filter_num: 2                  # ✅ 滤波
+    max_iteration: 3
+    filter_size_surf: 0.2                # ✅ 改为0.2米，保留细节
+    filter_size_map: 0.3                 # ✅ 改为0.3米
+    cube_side_length: 2000
+
+publish:
+    path_en: true
+    scan_publish_en: true
+    dense_publish_en: false
+    scan_bodyframe_pub_en: false
+
+pcd_save:
+    pcd_save_en: false
+    interval: -1

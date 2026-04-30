@@ -1,0 +1,73 @@
+common:
+    time_offset_lidar_imu: 0.0
+
+multiuav:
+    cluster_extraction_in_predict_region: true
+    inten_threshold: 200  #200  opengl范围0.1-1
+    min_high_inten_cluster_size: 3
+    min_cluster_size: 4  #3
+    predict_region_radius: 1  #匹配到队友后，预测区域的半径，单位：米
+    temp_predict_region_radius: 0.6  #匹配的时候的半径，红色框
+    traj_matching_start_thresh: 0.5  #100
+    ave_match_error_thresh: 0.24  #0.2   变小了，算出来的激励越高
+    pos_num_in_traj: 220
+    reset_tracker_thresh: 5.0
+    valid_cluster_size_thresh: 1.10
+    valid_cluster_dist_thresh: 0.7
+    mutual_observe_noise: 0.001
+    frame_num_in_sliding_window: 1
+    actual_uav_num: 2
+    degeneration_thresh: 10
+
+imu_propagate:
+    enable: true #false
+    topic: "/lidar_slam/imu_propagate"
+    filter_acc_en: false
+
+preprocess:
+    lidar_type: 6                # Simulation
+    feature_extract_en: false
+    scan_line: 6
+    blind: 0.45   #0.5 length
+
+calibration:
+    cut_frame_en: false
+    cut_frame_num: 1
+    accumulate_frame_en: false
+    original_frequency: 10 # hz
+    gravity_align_enable: false #false
+    gravity_align_time: 10 # seconds
+    PX4_R_I: [ 0.0, 0.0, 0.0 ] # degree
+    PX4_p_I: [ 0.0, 0.0, 0.0 ] # meter
+    level_horizon: [ 0.0 ,0.0 ,0.0 ] #degree
+
+mapping:
+    imu_en: true
+    acc_cov: 0.1
+    gyr_cov: 0.1
+    b_acc_cov: 0.0001
+    b_gyr_cov: 0.0001
+    det_range: 15
+    LI_extrinsic_T: [ 0.0, 0.0, 0.0 ]
+    # LI_extrinsic_R: [ 0, 0, 1,
+    #                -1, 0, 0,
+    #                0, -1, 0]
+    LI_extrinsic_R: [ 1, 0, 0,
+                    0, 1, 0,
+                    0, 0, 1]
+    point_filter_num: 2
+    max_iteration: 3
+    filter_size_surf: 0.35
+    filter_size_map: 0.35
+    cube_side_length: 2000
+
+publish:
+    path_en:  true
+    scan_publish_en:  true       # false: close all the point cloud output
+    dense_publish_en: false       # false: low down the points number in a global-frame point clouds scan.
+    scan_bodyframe_pub_en: false  # true: output the point cloud scans in IMU body frame
+
+pcd_save:
+    pcd_save_en: false
+    interval: -1                 # how many LiDAR frames saved in each pcd file;
+                                 # -1 : all frames will be saved in ONE pcd file, may lead to memory crash when having too much frames.

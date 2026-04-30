@@ -1,0 +1,6 @@
+uav_simulator/local_sensing/data/*
+
+# Python cache artifacts
+__pycache__/
+*.pyc
+*.pyo

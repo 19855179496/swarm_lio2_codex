@@ -1,0 +1,30 @@
+<launch>
+    <arg name="relay_all" default="true"/>
+    <arg name="drop_self" default="false"/>
+    <arg name="filter_teammate_only" default="false"/>
+    <arg name="drone_id" default="0"/>
+    <arg name="teammate_id" default="-1"/>
+    <arg name="log_every_quad" default="50"/>
+    <arg name="log_every_ge" default="20"/>
+    <arg name="drop_out_of_order" default="true"/>
+    <arg name="max_delay_ms_quad" default="400.0"/>
+    <arg name="max_delay_ms_ge" default="400.0"/>
+    <arg name="queue_size" default="50"/>
+
+    <node pkg="udp_bridge"
+          type="ros_bridge.py"
+          name="ros_bridge"
+          output="screen">
+        <param name="relay_all" value="$(arg relay_all)"/>
+        <param name="drop_self" value="$(arg drop_self)"/>
+        <param name="filter_teammate_only" value="$(arg filter_teammate_only)"/>
+        <param name="drone_id" value="$(arg drone_id)"/>
+        <param name="teammate_id" value="$(arg teammate_id)"/>
+        <param name="log_every_quad" value="$(arg log_every_quad)"/>
+        <param name="log_every_ge" value="$(arg log_every_ge)"/>
+        <param name="drop_out_of_order" value="$(arg drop_out_of_order)"/>
+        <param name="max_delay_ms_quad" value="$(arg max_delay_ms_quad)"/>
+        <param name="max_delay_ms_ge" value="$(arg max_delay_ms_ge)"/>
+        <param name="queue_size" value="$(arg queue_size)"/>
+    </node>
+</launch>

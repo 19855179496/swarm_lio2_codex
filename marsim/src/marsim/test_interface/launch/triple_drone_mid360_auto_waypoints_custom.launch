@@ -1,0 +1,119 @@
+<launch>
+    <arg name="position_cmd_topic_0" default="/quad_0/planning/pos_cmd"/>
+    <arg name="position_cmd_topic_1" default="/quad_1/planning/pos_cmd"/>
+    <arg name="position_cmd_topic_2" default="/quad_2/planning/pos_cmd"/>
+
+    <arg name="wait_for_start_signal" default="false"/>
+    <arg name="start_topic" default="/start_waypoint_mission_triple"/>
+
+    <arg name="mission_rate_hz" default="20.0"/>
+    <arg name="mission_start_delay" default="1.0"/>
+    <arg name="segment_duration" default="4.5"/>
+    <arg name="dwell_duration" default="1.0"/>
+    <arg name="loop_mission" default="true"/>
+    <arg name="publish_yaw_tangent" default="true"/>
+    <arg name="smooth_profile" default="true"/>
+
+    <arg name="time_offset_uav0" default="0.0"/>
+    <arg name="time_offset_uav1" default="1.2"/>
+    <arg name="time_offset_uav2" default="2.4"/>
+    <arg name="min_pair_distance" default="1.45"/>
+    <arg name="safety_hold_altitude_uav1" default="2.2"/>
+    <arg name="safety_hold_altitude_uav2" default="2.6"/>
+    <arg name="hold_z" default="0.0"/>
+
+    <arg name="record_bag" default="false"/>
+    <arg name="bag_file" default="/tmp/triple_drone_mid360_waypoint_mission.bag"/>
+
+    <include file="$(find test_interface)/launch/triple_drone_mid360_custom.launch">
+        <arg name="position_cmd_topic_0" value="$(arg position_cmd_topic_0)"/>
+        <arg name="position_cmd_topic_1" value="$(arg position_cmd_topic_1)"/>
+        <arg name="position_cmd_topic_2" value="$(arg position_cmd_topic_2)"/>
+        <arg name="wait_for_start_signal" value="$(arg wait_for_start_signal)"/>
+        <arg name="start_topic" value="$(arg start_topic)"/>
+    </include>
+
+    <node pkg="test_interface"
+          type="triple_waypoint_mission_publisher.py"
+          name="triple_waypoint_mission_publisher"
+          output="screen">
+        <param name="frame_id" value="world"/>
+        <param name="rate_hz" value="$(arg mission_rate_hz)"/>
+        <param name="start_delay" value="$(arg mission_start_delay)"/>
+        <param name="wait_for_start_signal" value="$(arg wait_for_start_signal)"/>
+        <param name="start_topic" value="$(arg start_topic)"/>
+
+        <param name="topic_uav0" value="$(arg position_cmd_topic_0)"/>
+        <param name="topic_uav1" value="$(arg position_cmd_topic_1)"/>
+        <param name="topic_uav2" value="$(arg position_cmd_topic_2)"/>
+
+        <param name="segment_duration" value="$(arg segment_duration)"/>
+        <param name="dwell_duration" value="$(arg dwell_duration)"/>
+        <param name="loop_mission" value="$(arg loop_mission)"/>
+        <param name="publish_yaw_tangent" value="$(arg publish_yaw_tangent)"/>
+        <param name="smooth_profile" value="$(arg smooth_profile)"/>
+        <param name="time_offset_uav0" value="$(arg time_offset_uav0)"/>
+        <param name="time_offset_uav1" value="$(arg time_offset_uav1)"/>
+        <param name="time_offset_uav2" value="$(arg time_offset_uav2)"/>
+        <param name="min_pair_distance" value="$(arg min_pair_distance)"/>
+        <param name="safety_hold_altitude_uav1" value="$(arg safety_hold_altitude_uav1)"/>
+        <param name="safety_hold_altitude_uav2" value="$(arg safety_hold_altitude_uav2)"/>
+        <param name="hold_z" value="$(arg hold_z)"/>
+
+        <rosparam param="kx">[7.0, 7.0, 6.2]</rosparam>
+        <rosparam param="kv">[4.0, 4.0, 4.0]</rosparam>
+
+        <rosparam param="waypoints_uav0">
+            [[0.0, 0.0, 1.2],
+             [0.9, 2.2, 1.2],
+             [-2.4, 1.8, 1.2],
+             [-0.8, 1.2, 1.2],
+             [0.9, 2.1, 1.2],
+             [-2.4, 1.4, 1.2],
+             [0.0, 0.0, 1.2]]
+        </rosparam>
+
+        <rosparam param="waypoints_uav1">
+            [[-3.0, 0.0, 1.5],
+             [-2.2, -2.3, 1.5],
+             [0.5, -1.7, 1.5],
+             [-1.6, -1.2, 1.5],
+             [-2.2, -2.1, 1.5],
+             [0.5, -1.3, 1.5],
+             [-3.0, 0.0, 1.5]]
+        </rosparam>
+
+        <rosparam param="waypoints_uav2">
+            [[-6.0, 1.2, 2.0],
+             [-5.4, 2.0, 2.0],
+             [-4.8, 1.6, 2.0],
+             [-5.6, 0.8, 2.0],
+             [-6.2, 1.6, 2.0],
+             [-5.3, 2.1, 2.0],
+             [-6.0, 1.2, 2.0]]
+        </rosparam>
+    </node>
+
+    <node if="$(arg record_bag)"
+          pkg="rosbag"
+          type="record"
+          name="triple_waypoint_mission_recorder"
+          output="screen"
+          args="-O $(arg bag_file)
+                /quad_0/planning/pos_cmd
+                /quad_1/planning/pos_cmd
+                /quad_2/planning/pos_cmd
+                /quad0/connected_teammate_num
+                /quad1/connected_teammate_num
+                /quad2/connected_teammate_num
+                /quad0/uav_visualization
+                /quad1/uav_visualization
+                /quad2/uav_visualization
+                /quad0/lidar_slam/odom
+                /quad1/lidar_slam/odom
+                /quad2/lidar_slam/odom
+                /quadstate_to_teammate
+                /quadstate_from_teammate
+                /global_extrinsic_to_teammate
+                /global_extrinsic_from_teammate"/>
+</launch>

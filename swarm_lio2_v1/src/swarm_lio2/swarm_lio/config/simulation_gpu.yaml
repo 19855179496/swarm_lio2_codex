@@ -1,0 +1,266 @@
+# ==========================
+# Swarm-LIO2 (GPU仿真) 参数说明
+# 适用场景：Marsim + mid360 + use_gpu=true
+# 说明：本文件在原值不变的前提下，补充“参数作用/调参方向/注意事项”。
+# ==========================
+
+common:
+    # LiDAR时间戳相对IMU时间戳的偏移量(秒)。
+    # 作用：进入前端去畸变与IMU传播对齐；偏差过大将导致运动畸变补偿错误。
+    # 调参：离线标定后一般保持0；若出现持续性拖影再微调。
+    time_offset_lidar_imu: 0.0
+
+multiuav:
+    # 是否在“预测区域”内做普通点云聚类。
+    # 作用：true时仅在追踪器附近截取点云，减少误检和计算量。
+    cluster_extraction_in_predict_region: true
+
+    # 高反射点阈值(当前已改为float链路，GPU渲染强度通常在0~1)。
+    # 作用：用于创建临时目标(Temp Tracker)的候选点筛选。
+    # 现象：阈值过低会引入背景噪声，过高会漏掉无人机点。
+    inten_threshold: 0.6
+
+    # 高反射聚类最小点数。
+    # 作用：高反点聚类后，点数低于该值会被丢弃，避免孤立噪声点触发临时追踪器。
+    min_high_inten_cluster_size: 3
+
+    # 普通聚类最小点数。
+    # 作用：预测区域内普通点云聚类的最小点数；略大可减少背景散点被框住。
+    min_cluster_size: 4
+
+    # 已确认队友后的预测搜索半径(米)。
+    # 作用：teammate_tracker 位置附近做半径搜索；越大越稳但误聚类概率增大。
+    predict_region_radius: 1.15
+
+    # 临时追踪器预测搜索半径(米)。
+    # 作用：temp_tracker 位置附近做半径搜索；直接决定“是否包住目标点”。
+    # 注意：可视化边框里有 -0.1 的显示偏移，因此视觉上会比该值看起来更小。
+    temp_predict_region_radius: 0.95
+
+    # 轨迹激励阈值(轨迹匹配启动门限，SVD第二奇异值阈值)。
+    # 作用：运动不够“激励”时不做轨迹匹配，防止静止/小幅运动时误配。
+    traj_matching_start_thresh: 0.4
+
+    # 轨迹匹配平均误差阈值(越小越严格)。
+    # 作用：决定临时目标能否被确认为队友。
+    ave_match_error_thresh: 0.22
+
+    # 用于轨迹匹配的历史轨迹长度。
+    # 作用：窗口越长，匹配更稳但确认更慢。
+    pos_num_in_traj: 140
+
+    # 轨迹匹配所需的最少同步点数。
+    # 作用：原代码硬编码50点，10Hz下至少约5秒；这里取35点，在识别时间和精度之间折中。
+    min_traj_match_points: 35
+
+    # 轨迹点时间戳匹配容差(秒)。
+    # 作用：ros_bridge/仿真调度有轻微抖动时仍可配对轨迹点。
+    traj_time_tolerance: 0.04
+
+    # 轨迹匹配成功后，当前时刻通信预测位置与临时tracker位置的最大允许偏差(米)。
+    # 作用：防止平均轨迹误差偶然过关但当前外参明显错误，导致队友框和真实无人机分离。
+    traj_match_current_dist_thresh: 0.45
+
+    # 轨迹匹配中任意单个同步点的最大允许误差(米)。
+    # 作用：平均误差过关但局部错配明显时拒绝确认，优先保证识别精度。
+    traj_match_max_error_thresh: 0.5
+
+    # 追踪器重置阈值(秒)。
+    # 作用：超时未更新则重置状态，防止旧轨迹污染。
+    reset_tracker_thresh: 5.0
+
+    # 聚类尺寸上限(米，对角线长度阈值)。
+    # 作用：过滤过大的聚类(通常不是无人机本体)。
+    valid_cluster_size_thresh: 1.15
+
+    # 聚类到预测位置的最大关联距离(米)。
+    # 作用：决定观测是否可用于更新队友追踪器。
+    valid_cluster_dist_thresh: 0.75
+
+    # 临时追踪器聚类关联距离(米)。
+    # 作用：启动阶段更容易持续跟住队友，避免黄框因短时漏检而断掉。
+    valid_temp_cluster_dist_thresh: 0.85
+
+    # 判断高反聚类与已有追踪目标是否为同一物体的距离阈值(米)。
+    # 作用：避免同一架队友无人机重复创建多个临时黄框。
+    same_obj_thresh: 0.8
+
+    # 临时追踪器最大允许漏检时间(秒)。
+    # 作用：略放宽可防止机动/遮挡时黄框频繁删除重建。
+    temp_tracker_max_miss_time: 4.0
+
+    # 临时tracker存在超过该时间且运动距离过小，则认为它更可能是静态高反障碍物。
+    temp_tracker_static_max_time: 5.0
+
+    # 临时tracker刚创建后的静态判定保护时间，避免刚起步/刚看到队友时被误删。
+    temp_tracker_static_grace_time: 5.0
+
+    # 临时tracker在上述时间内至少需要产生的位移(米)，低于该值会被判为静态障碍物。
+    temp_tracker_min_motion: 0.35
+
+    # 静态障碍物被拒绝后，在该时间内不再从同一位置创建新的临时tracker。
+    static_reject_duration: 8.0
+
+    # 静态障碍物黑名单半径(米)。
+    static_reject_radius: 1.0
+
+    # 地图/ICP输入中剔除动态队友点云的球半径(米)。
+    # 作用：比可视框略大，减少队友漏剔除后在本机地图里形成空中障碍物。
+    dynamic_filter_radius: 1.2
+
+    # 互观测可视化过期时间(秒)。
+    # 作用：短时漏检时不立刻变黄，减少状态闪烁；实际点云剔除仍会使用通信预测位置。
+    observation_stale_time: 1.2
+
+    # 互观测噪声。
+    # 作用：进入互观测残差协方差，值越大代表互观测可信度越低。
+    mutual_observe_noise: 0.001
+
+    # 滑窗帧数(用于退化检测/互观测统计流程)。
+    # 作用：越大越平滑，响应会更慢。
+    frame_num_in_sliding_window: 1
+
+    # 实际编队无人机数量。
+    # 作用：达到 actual_uav_num-1 个队友后停止继续发现新队友。
+    actual_uav_num: 3
+
+    # 退化阈值。
+    # 作用：用于判定系统观测退化状态，影响后续融合策略。
+    degeneration_thresh: 10
+
+imu_propagate:
+    # 是否发布IMU传播结果。
+    # 作用：用于调试与外部模块订阅，不改变主估计主干逻辑。
+    enable: true
+
+    # IMU传播话题名。
+    topic: "/lidar_slam/imu_propagate"
+
+    # 是否对加速度做滤波。
+    # 作用：可抑制高频噪声；但在快速机动时会带来轻微滞后。
+    filter_acc_en: false
+
+preprocess:
+    # 雷达类型：6 表示仿真输入流(SIM)。
+    # 作用：影响预处理分支和多机模块内部若干阈值分支。
+    lidar_type: 6
+
+    # 是否做特征提取。
+    # 作用：false时走FAST-LIO2常见直接法路径，仿真中通常更稳。
+    feature_extract_en: false
+
+    # 扫描线数。
+    # 作用：影响点云组织方式；需与仿真雷达模型一致。
+    scan_line: 6
+
+    # 盲区半径(米)。
+    # 作用：过滤过近点，减少机体自反射和近场噪声。
+    blind: 0.4
+
+calibration:
+    # 是否裁帧(将一帧切成多帧)。
+    # 作用：高频场景可降低单次计算压力，但会改变时间组织。
+    cut_frame_en: false
+
+    # 每帧切分数量。
+    cut_frame_num: 1
+
+    # 是否累积多帧再处理。
+    # 作用：提高点密度但增加时延；实时多机一般保持false。
+    accumulate_frame_en: false
+
+    # 原始雷达频率(Hz)。
+    # 作用：与切帧/累帧逻辑联合决定等效处理频率。
+    original_frequency: 10 # hz
+
+    # 是否做重力对齐初始化。
+    # 作用：开启可提升姿态初始一致性；仿真中若初值已准可关闭。
+    gravity_align_enable: false
+
+    # 重力对齐持续时间(秒)。
+    gravity_align_time: 10 # seconds
+
+    # PX4坐标系到FAST-LIO IMU坐标系外参(欧拉角，度)。
+    PX4_R_I: [ 0.0, 0.0, 0.0 ] # degree
+
+    # PX4坐标系到FAST-LIO IMU坐标系平移外参(米)。
+    PX4_p_I: [ 0.0, 0.0, 0.0 ] # meter
+
+    # 水平基准对齐(欧拉角，度)。
+    level_horizon: [ 0.0 ,0.0 ,0.0 ] #degree
+
+mapping:
+    # 是否启用IMU辅助建图/里程计。
+    # 作用：关闭后仅点云约束，动态环境中通常更不稳。
+    imu_en: true
+
+    # 加速度测量噪声协方差。
+    # 作用：越大表示越不信任IMU加速度。
+    acc_cov: 0.1
+
+    # 角速度测量噪声协方差。
+    gyr_cov: 0.1
+
+    # 加速度零偏随机游走协方差。
+    b_acc_cov: 0.0001
+
+    # 角速度零偏随机游走协方差。
+    b_gyr_cov: 0.0001
+
+    # 有效探测半径(米)。
+    # 作用：影响参与建图与匹配的点范围，过大增加计算量。
+    det_range: 15
+
+    # LiDAR到IMU平移外参(米)。
+    # 作用：外参错误会直接导致配准系统性偏差。
+    LI_extrinsic_T: [ 0.0, 0.0, 0.0 ]
+    # LI_extrinsic_R: [ 0, 0, 1,
+    #                -1, 0, 0,
+    #                0, -1, 0]
+    # LiDAR到IMU旋转外参(3x3行优先展开)。
+    LI_extrinsic_R: [ 1, 0, 0,
+                    0, 1, 0,
+                    0, 0, 1]
+
+    # 点下采样步长(预处理抽点)。
+    # 作用：越小点越多更精细，但计算开销更大。
+    point_filter_num: 2
+
+    # 每帧最大迭代次数。
+    # 作用：大一些可提升收敛精度，但会增加单帧耗时。
+    max_iteration: 3
+
+    # 当前帧特征体素大小(米)。
+    filter_size_surf: 0.3
+
+    # 全局地图体素大小(米)。
+    filter_size_map: 0.3
+
+    # 局部地图立方体边长(米)。
+    # 作用：决定地图管理窗口大小；过大占内存，过小易丢上下文。
+    cube_side_length: 2000
+
+publish:
+    # 是否发布轨迹。
+    path_en:  true
+
+    # 是否发布点云。
+    # 作用：关闭可显著减轻通信和可视化开销。
+    scan_publish_en:  true
+
+    # 是否发布稠密点云。
+    # 作用：true画面更细但带宽和CPU占用更高。
+    dense_publish_en: false
+
+    # 是否发布机体系(body frame)点云。
+    # 作用：用于调试去畸变与外参，常规运行可关闭。
+    scan_bodyframe_pub_en: false
+
+pcd_save:
+    # 是否保存PCD。
+    # 作用：离线分析/复盘使用；在线运行建议关闭。
+    pcd_save_en: false
+
+    # 每个PCD文件包含的LiDAR帧数。
+    # -1 表示全部写入同一文件(长时运行可能内存和文件体积过大)。
+    interval: -1
