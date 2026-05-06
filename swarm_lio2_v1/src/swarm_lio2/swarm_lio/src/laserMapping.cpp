@@ -1616,7 +1616,7 @@ int main(int argc, char **argv) {
                 if (swarm->IsDurationShort(lidar_end_time, iter->second, id)) {
                     //Check clusters' validation, and update observe status
                     //如果teammate的预测距离与之前聚类的点云比较接近，就会把这个当成被观测得对象
-                    swarm->CheckClusterValidation(id, iter->second);
+                    swarm->CheckClusterValidation(lidar_end_time, id, iter->second);
 
                     //Observe teammate
                     if (swarm->IsObserveTeammate(iter->second)) {//如果这个无人机队友是被视为观测队友，那么可以进行下一步

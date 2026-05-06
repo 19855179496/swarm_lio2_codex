@@ -41,6 +41,8 @@ Multi_UAV::Multi_UAV(const ros::NodeHandle &nh, const int & drone_id_) {
     LoadParam("multiuav/temp_tracker_min_motion", temp_tracker_min_motion, double(0.35));
     LoadParam("multiuav/static_reject_duration", static_reject_duration, double(8.0));
     LoadParam("multiuav/static_reject_radius", static_reject_radius, double(1.0));
+    LoadParam("multiuav/confirmed_tracker_comm_recenter_after_time", confirmed_tracker_comm_recenter_after_time, double(0.3));
+    LoadParam("multiuav/confirmed_tracker_comm_recenter_dist_thresh", confirmed_tracker_comm_recenter_dist_thresh, double(2.0));
     LoadParam("multiuav/reset_tracker_thresh", reset_tracker_thresh, double(5.0));
     LoadParam("multiuav/valid_cluster_size_thresh", valid_cluster_size_thresh, 0.6);
     LoadParam("multiuav/valid_cluster_dist_thresh", valid_cluster_dist_thresh, 0.35);
@@ -484,6 +486,24 @@ bool Multi_UAV::IsDurationShort(const double &lidar_end_time, Teammate &teammate
     }
 }
 
+bool Multi_UAV::GetCommRecenterPosition(const int &id, const double &lidar_end_time,
+                                        const V3D &tracker_pos_world, V3D &comm_pos_world) {
+    auto teammate_iter = teammates.find(id);
+    if (teammate_iter == teammates.end())
+        return false;
+    if (id < 0 || id >= MAX_UAV_NUM)
+        return false;
+    if (lidar_end_time - teammate_iter->second.last_connect_time > 2.0)
+        return false;
+    if (state.global_extrinsic_trans[id].norm() < 0.001)
+        return false;
+
+    comm_pos_world =
+        state.global_extrinsic_rot[id] * teammate_iter->second.teammate_state.pos_end +
+        state.global_extrinsic_trans[id];
+    return (comm_pos_world - tracker_pos_world).norm() < confirmed_tracker_comm_recenter_dist_thresh;
+}
+
 //Propagate teammate's pose in its own global frame at t_k.
 void Multi_UAV::PropagateTeammateState(const double &lidar_end_time, Teammate &teammate) {
     double delta_t_quad = lidar_end_time - teammate.teammate_state.sub_time;
@@ -734,8 +754,14 @@ void Multi_UAV::ClusterExtractPredictRegion(const double &lidar_end_time, const 
     for (auto iter = teammate_tracker.begin(); iter != teammate_tracker.end(); ++iter) {
         //V3D predict_pos_in_body = state.rot_end.transpose() * (iter->second.get_state_pos() - state.pos_end);
         int id = iter->first;
-        auto teammate_iter = teammates.find(id);
-        V3D predict_pos_in_body = state.rot_end.transpose() * (state.global_extrinsic_rot[id] * teammate_iter->second.teammate_state.pos_end + state.global_extrinsic_trans[id] - state.pos_end); //预测的队友位置
+        V3D predict_pos_world = iter->second.get_state_pos();
+        V3D comm_pos_world = Zero3d;
+        double cluster_miss_time = lidar_end_time - iter->second.last_update_time_;
+        if (cluster_miss_time > confirmed_tracker_comm_recenter_after_time &&
+            GetCommRecenterPosition(id, lidar_end_time, predict_pos_world, comm_pos_world)) {
+            predict_pos_world = comm_pos_world;
+        }
+        V3D predict_pos_in_body = state.rot_end.transpose() * (predict_pos_world - state.pos_end); //预测的队友位置
 
         PointType searchPoint;
         searchPoint.x = predict_pos_in_body(0);
@@ -929,7 +955,7 @@ void Multi_UAV::ClusterExtractHighIntensity(const double &lidar_end_time, const 
 
 
 
-void Multi_UAV::CheckClusterValidation(const int &id, Teammate &teammate) {
+void Multi_UAV::CheckClusterValidation(const double &lidar_end_time, const int &id, Teammate &teammate) {
     //Reset observe status
     teammate.is_observe_teammate = false;
     teammate.teammate_pos_in_body = Zero3d;
@@ -939,19 +965,38 @@ void Multi_UAV::CheckClusterValidation(const int &id, Teammate &teammate) {
     else {
         auto &tracker = iter->second;
         //V3D pos_predict = state.rot_end.transpose() * (tracker.get_state_pos() - state.pos_end); //EKF的预测
-        auto teammate_iter = teammates.find(id);
-        V3D pos_predict = state.rot_end.transpose() * (state.global_extrinsic_rot[id] * teammate_iter->second.teammate_state.pos_end + state.global_extrinsic_trans[id] - state.pos_end); //EKF的预测
+        V3D tracker_pos_world = tracker.get_state_pos();
+        V3D pos_predict = state.rot_end.transpose() * (tracker_pos_world - state.pos_end); //EKF的预测
 
         double min_dist = DBL_MAX;  //找到最近的一个cluster
+        int best_cluster_index = -1;
         for (int j = 0; j < cluster_pos_tag.size(); j++) {
             V3D resi_vec = cluster_pos_tag[j].pos_in_body - pos_predict;
             if (resi_vec.norm() < valid_cluster_dist_thresh && resi_vec.norm() < min_dist) {
                 min_dist = resi_vec.norm();
-                teammate.is_observe_teammate = true;
-                teammate.teammate_pos_in_body = cluster_pos_tag[j].pos_in_body;
-                cluster_pos_tag.erase(cluster_pos_tag.begin() + j); //删除匹配成功的cluster position，减少后续计算
-                j--;
+                best_cluster_index = j;
             }
+        }
+
+        V3D comm_pos_world = Zero3d;
+        if (best_cluster_index < 0 &&
+            lidar_end_time - tracker.last_update_time_ > confirmed_tracker_comm_recenter_after_time &&
+            GetCommRecenterPosition(id, lidar_end_time, tracker_pos_world, comm_pos_world)) {
+            V3D comm_pos_predict = state.rot_end.transpose() * (comm_pos_world - state.pos_end);
+            min_dist = DBL_MAX;
+            for (int j = 0; j < cluster_pos_tag.size(); j++) {
+                V3D resi_vec = cluster_pos_tag[j].pos_in_body - comm_pos_predict;
+                if (resi_vec.norm() < valid_cluster_dist_thresh && resi_vec.norm() < min_dist) {
+                    min_dist = resi_vec.norm();
+                    best_cluster_index = j;
+                }
+            }
+        }
+
+        if (best_cluster_index >= 0) {
+            teammate.is_observe_teammate = true;
+            teammate.teammate_pos_in_body = cluster_pos_tag[best_cluster_index].pos_in_body;
+            cluster_pos_tag.erase(cluster_pos_tag.begin() + best_cluster_index); //删除匹配成功的cluster position，减少后续计算
         }
     }
 }

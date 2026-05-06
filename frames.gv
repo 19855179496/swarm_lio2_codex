@@ -1,0 +1,20 @@
+digraph G {
+"quad1/world" -> "quad1_imu_propagation"[label="Broadcaster: /laserMapping_quad1\nAverage rate: 196.609 Hz\nMost recent transform: 1778056281.284 ( 0.009 sec old)\nBuffer length: 5.015 sec\n"];
+"quad0/world" -> "quad0_imu_propagation"[label="Broadcaster: /laserMapping_quad0\nAverage rate: 198.001 Hz\nMost recent transform: 1778056281.287 ( 0.005 sec old)\nBuffer length: 5.015 sec\n"];
+"quad2/world" -> "quad2_imu_propagation"[label="Broadcaster: /laserMapping_quad2\nAverage rate: 197.807 Hz\nMost recent transform: 1778056281.286 ( 0.006 sec old)\nBuffer length: 5.015 sec\n"];
+"quad0/world" -> "quad0_aft_mapped"[label="Broadcaster: /laserMapping_quad0\nAverage rate: 10.204 Hz\nMost recent transform: 1778056281.167 ( 0.125 sec old)\nBuffer length: 4.900 sec\n"];
+"quad1/world" -> "quad1_aft_mapped"[label="Broadcaster: /laserMapping_quad1\nAverage rate: 10.204 Hz\nMost recent transform: 1778056281.179 ( 0.114 sec old)\nBuffer length: 4.900 sec\n"];
+"quad2/world" -> "quad2_aft_mapped"[label="Broadcaster: /laserMapping_quad2\nAverage rate: 10.204 Hz\nMost recent transform: 1778056281.201 ( 0.091 sec old)\nBuffer length: 4.900 sec\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1778056281.292"[ shape=plaintext ] ;
+ }->"quad1/world";
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1778056281.292"[ shape=plaintext ] ;
+ }->"quad0/world";
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1778056281.292"[ shape=plaintext ] ;
+ }->"quad2/world";
+}

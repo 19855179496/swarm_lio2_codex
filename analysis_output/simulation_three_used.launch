@@ -1,0 +1,35 @@
+<!-- Launch file for Simulation Drone Swarm -->
+<launch>
+<!--	<include file="$(find swarm_lio)/launch/single_drone_sim.xml">-->
+<!--		<arg name="drone_id" value="0"/>-->
+<!--		<arg name="output_mode" value="screen"/>-->
+<!--	</include>-->
+
+	<include file="$(find swarm_lio)/launch/single_drone_sim.launch">
+		<arg name="drone_id" value="0"/>
+		<arg name="output_mode" value="screen"/>
+	</include>
+
+	<include file="$(find swarm_lio)/launch/single_drone_sim.launch">
+		<arg name="drone_id" value="1"/>
+		<arg name="output_mode" value="screen"/>
+	</include>
+
+	<include file="$(find swarm_lio)/launch/single_drone_sim.launch">
+		<arg name="drone_id" value="2"/>
+		<arg name="output_mode" value="screen"/>
+	</include>
+
+
+	<group>
+		<node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz_0" args="-d $(find swarm_lio)/rviz_cfg/sim00.rviz" />
+        <node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz_1" args="-d $(find swarm_lio)/rviz_cfg/sim01.rviz" />
+		<node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz_2" args="-d $(find swarm_lio)/rviz_cfg/sim02.rviz" />
+<!--		<node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz_3" args="-d $(find swarm_lio)/rviz_cfg/sim03.rviz" />-->
+<!--		<node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz_4" args="-d $(find swarm_lio)/rviz_cfg/sim04.rviz" />-->
+<!--		<node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz_5" args="-d $(find swarm_lio)/rviz_cfg/sim05.rviz" />-->
+<!--		<node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz_6" args="-d $(find swarm_lio)/rviz_cfg/sim06.rviz" />-->
+<!--		<node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz_7" args="-d $(find swarm_lio)/rviz_cfg/sim07.rviz" />-->
+	</group>
+
+</launch>

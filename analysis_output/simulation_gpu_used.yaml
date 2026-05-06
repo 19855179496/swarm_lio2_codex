@@ -104,14 +104,6 @@ multiuav:
     # 静态障碍物黑名单半径(米)。
     static_reject_radius: 1.0
 
-    # 已确认队友tracker漏观测超过该时间后，允许通信预测位置作为重捕获搜索中心(秒)。
-    # 作用：解决绿框停在旧位置，真实队友点云聚类落在 predict_region 外部导致无法重新关联的问题。
-    confirmed_tracker_comm_recenter_after_time: 0.3
-
-    # 通信重捕获允许的最大 tracker-通信预测距离(米)。
-    # 作用：距离过大时拒绝通信重定位，避免错误外参/误匹配把搜索窗拽到障碍物。
-    confirmed_tracker_comm_recenter_dist_thresh: 2.0
-
     # 地图/ICP输入中剔除动态队友点云的球半径(米)。
     # 作用：比可视框略大，减少队友漏剔除后在本机地图里形成空中障碍物。
     dynamic_filter_radius: 1.2

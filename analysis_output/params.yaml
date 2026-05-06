@@ -1,0 +1,518 @@
+laserMapping_quad0:
+  calibration:
+    PX4_R_I:
+    - 0.0
+    - 0.0
+    - 0.0
+    PX4_p_I:
+    - 0.0
+    - 0.0
+    - 0.0
+    accumulate_frame_en: false
+    cut_frame_en: false
+    cut_frame_num: 1
+    gravity_align_enable: false
+    gravity_align_time: 10
+    level_horizon:
+    - 0.0
+    - 0.0
+    - 0.0
+    original_frequency: 10
+  common:
+    drone_id: 0
+    imu_topic: /quad_0/imu
+    lid_topic: /quad0_pcl_render_node/sensor_cloud
+    time_offset_lidar_imu: 0.0
+  imu_propagate:
+    enable: true
+    filter_acc_en: false
+    topic: /lidar_slam/imu_propagate
+  mapping:
+    LI_extrinsic_R:
+    - 1
+    - 0
+    - 0
+    - 0
+    - 1
+    - 0
+    - 0
+    - 0
+    - 1
+    LI_extrinsic_T:
+    - 0.0
+    - 0.0
+    - 0.0
+    acc_cov: 0.1
+    b_acc_cov: 0.0001
+    b_gyr_cov: 0.0001
+    cube_side_length: 2000
+    det_range: 15
+    filter_size_map: 0.3
+    filter_size_surf: 0.3
+    gyr_cov: 0.1
+    imu_en: true
+    max_iteration: 3
+    point_filter_num: 2
+  multiuav:
+    actual_uav_num: 3
+    ave_match_error_thresh: 0.22
+    cluster_extraction_in_predict_region: true
+    degeneration_thresh: 10
+    dynamic_filter_radius: 1.2
+    frame_num_in_sliding_window: 1
+    inten_threshold: 0.6
+    min_cluster_size: 4
+    min_high_inten_cluster_size: 3
+    min_traj_match_points: 35
+    mutual_observe_noise: 0.001
+    observation_stale_time: 1.2
+    pos_num_in_traj: 140
+    predict_region_radius: 1.15
+    reset_tracker_thresh: 5.0
+    same_obj_thresh: 0.8
+    static_reject_duration: 8.0
+    static_reject_radius: 1.0
+    temp_predict_region_radius: 0.95
+    temp_tracker_max_miss_time: 4.0
+    temp_tracker_min_motion: 0.35
+    temp_tracker_static_grace_time: 5.0
+    temp_tracker_static_max_time: 5.0
+    traj_match_current_dist_thresh: 0.45
+    traj_match_max_error_thresh: 0.5
+    traj_matching_start_thresh: 0.4
+    traj_time_tolerance: 0.04
+    valid_cluster_dist_thresh: 0.75
+    valid_cluster_size_thresh: 1.15
+    valid_temp_cluster_dist_thresh: 0.85
+  pcd_save:
+    interval: -1
+    pcd_save_en: false
+  preprocess:
+    blind: 0.4
+    feature_extract_en: false
+    lidar_type: 6
+    scan_line: 6
+  publish:
+    dense_publish_en: false
+    path_en: true
+    scan_bodyframe_pub_en: false
+    scan_publish_en: true
+  sub_gt_pose_topic: /quad_0/lidar_slam/odom
+laserMapping_quad1:
+  calibration:
+    PX4_R_I:
+    - 0.0
+    - 0.0
+    - 0.0
+    PX4_p_I:
+    - 0.0
+    - 0.0
+    - 0.0
+    accumulate_frame_en: false
+    cut_frame_en: false
+    cut_frame_num: 1
+    gravity_align_enable: false
+    gravity_align_time: 10
+    level_horizon:
+    - 0.0
+    - 0.0
+    - 0.0
+    original_frequency: 10
+  common:
+    drone_id: 1
+    imu_topic: /quad_1/imu
+    lid_topic: /quad1_pcl_render_node/sensor_cloud
+    time_offset_lidar_imu: 0.0
+  imu_propagate:
+    enable: true
+    filter_acc_en: false
+    topic: /lidar_slam/imu_propagate
+  mapping:
+    LI_extrinsic_R:
+    - 1
+    - 0
+    - 0
+    - 0
+    - 1
+    - 0
+    - 0
+    - 0
+    - 1
+    LI_extrinsic_T:
+    - 0.0
+    - 0.0
+    - 0.0
+    acc_cov: 0.1
+    b_acc_cov: 0.0001
+    b_gyr_cov: 0.0001
+    cube_side_length: 2000
+    det_range: 15
+    filter_size_map: 0.3
+    filter_size_surf: 0.3
+    gyr_cov: 0.1
+    imu_en: true
+    max_iteration: 3
+    point_filter_num: 2
+  multiuav:
+    actual_uav_num: 3
+    ave_match_error_thresh: 0.22
+    cluster_extraction_in_predict_region: true
+    degeneration_thresh: 10
+    dynamic_filter_radius: 1.2
+    frame_num_in_sliding_window: 1
+    inten_threshold: 0.6
+    min_cluster_size: 4
+    min_high_inten_cluster_size: 3
+    min_traj_match_points: 35
+    mutual_observe_noise: 0.001
+    observation_stale_time: 1.2
+    pos_num_in_traj: 140
+    predict_region_radius: 1.15
+    reset_tracker_thresh: 5.0
+    same_obj_thresh: 0.8
+    static_reject_duration: 8.0
+    static_reject_radius: 1.0
+    temp_predict_region_radius: 0.95
+    temp_tracker_max_miss_time: 4.0
+    temp_tracker_min_motion: 0.35
+    temp_tracker_static_grace_time: 5.0
+    temp_tracker_static_max_time: 5.0
+    traj_match_current_dist_thresh: 0.45
+    traj_match_max_error_thresh: 0.5
+    traj_matching_start_thresh: 0.4
+    traj_time_tolerance: 0.04
+    valid_cluster_dist_thresh: 0.75
+    valid_cluster_size_thresh: 1.15
+    valid_temp_cluster_dist_thresh: 0.85
+  pcd_save:
+    interval: -1
+    pcd_save_en: false
+  preprocess:
+    blind: 0.4
+    feature_extract_en: false
+    lidar_type: 6
+    scan_line: 6
+  publish:
+    dense_publish_en: false
+    path_en: true
+    scan_bodyframe_pub_en: false
+    scan_publish_en: true
+  sub_gt_pose_topic: /quad_1/lidar_slam/odom
+laserMapping_quad2:
+  calibration:
+    PX4_R_I:
+    - 0.0
+    - 0.0
+    - 0.0
+    PX4_p_I:
+    - 0.0
+    - 0.0
+    - 0.0
+    accumulate_frame_en: false
+    cut_frame_en: false
+    cut_frame_num: 1
+    gravity_align_enable: false
+    gravity_align_time: 10
+    level_horizon:
+    - 0.0
+    - 0.0
+    - 0.0
+    original_frequency: 10
+  common:
+    drone_id: 2
+    imu_topic: /quad_2/imu
+    lid_topic: /quad2_pcl_render_node/sensor_cloud
+    time_offset_lidar_imu: 0.0
+  imu_propagate:
+    enable: true
+    filter_acc_en: false
+    topic: /lidar_slam/imu_propagate
+  mapping:
+    LI_extrinsic_R:
+    - 1
+    - 0
+    - 0
+    - 0
+    - 1
+    - 0
+    - 0
+    - 0
+    - 1
+    LI_extrinsic_T:
+    - 0.0
+    - 0.0
+    - 0.0
+    acc_cov: 0.1
+    b_acc_cov: 0.0001
+    b_gyr_cov: 0.0001
+    cube_side_length: 2000
+    det_range: 15
+    filter_size_map: 0.3
+    filter_size_surf: 0.3
+    gyr_cov: 0.1
+    imu_en: true
+    max_iteration: 3
+    point_filter_num: 2
+  multiuav:
+    actual_uav_num: 3
+    ave_match_error_thresh: 0.22
+    cluster_extraction_in_predict_region: true
+    degeneration_thresh: 10
+    dynamic_filter_radius: 1.2
+    frame_num_in_sliding_window: 1
+    inten_threshold: 0.6
+    min_cluster_size: 4
+    min_high_inten_cluster_size: 3
+    min_traj_match_points: 35
+    mutual_observe_noise: 0.001
+    observation_stale_time: 1.2
+    pos_num_in_traj: 140
+    predict_region_radius: 1.15
+    reset_tracker_thresh: 5.0
+    same_obj_thresh: 0.8
+    static_reject_duration: 8.0
+    static_reject_radius: 1.0
+    temp_predict_region_radius: 0.95
+    temp_tracker_max_miss_time: 4.0
+    temp_tracker_min_motion: 0.35
+    temp_tracker_static_grace_time: 5.0
+    temp_tracker_static_max_time: 5.0
+    traj_match_current_dist_thresh: 0.45
+    traj_match_max_error_thresh: 0.5
+    traj_matching_start_thresh: 0.4
+    traj_time_tolerance: 0.04
+    valid_cluster_dist_thresh: 0.75
+    valid_cluster_size_thresh: 1.15
+    valid_temp_cluster_dist_thresh: 0.85
+  pcd_save:
+    interval: -1
+    pcd_save_en: false
+  preprocess:
+    blind: 0.4
+    feature_extract_en: false
+    lidar_type: 6
+    scan_line: 6
+  publish:
+    dense_publish_en: false
+    path_en: true
+    scan_bodyframe_pub_en: false
+    scan_publish_en: true
+  sub_gt_pose_topic: /quad_2/lidar_slam/odom
+map_pub1:
+  downsample_res: 0.1
+  map_offset_x: 0.0
+  map_offset_y: 0.0
+  map_offset_z: 0.0
+quad0_cascadePID_node:
+  angle_stable_time: 0.5
+  controller_rate: 200
+  damping_ratio: 1.0
+  drone_id: 0
+  init_state_x: 0.0
+  init_state_y: 0.0
+  init_state_yaw: 0.0
+  init_state_z: 0.0
+  max_speed: 3.0
+  quadrotor_name: quad_0
+  start_topic: /start_figure8
+  wait_for_start_signal: false
+quad0_odom_visualization:
+  color:
+    a: 1.0
+    b: 1.0
+    g: 1.0
+    r: 0.0
+  covariance_scale: 100.0
+  drone_id: 0
+  init_x: 0.0
+  init_y: 0.0
+  init_z: 0.0
+  mesh_resource: package://odom_visualization/meshes/yunque.dae
+  quadrotor_name: quad0
+  robot_scale: 1.0
+quad0_pcl_render_node:
+  collision_range: 0.3
+  collisioncheck_enable: 0
+  curvature_limit: 100.0
+  downsample_res: 0.1
+  drone_id: 0
+  dyn_mode: 0
+  dyn_velocity: 1.0
+  dynobj_enable: 0
+  dynobject_num: 10
+  dynobject_size: 0.8
+  estimation_rate: 10.0
+  hash_cubesize: 5.0
+  is_360lidar: 1
+  livox_linestep: 1.4
+  min_raylength: 1.0
+  output_pcd: 0
+  pcl_intensity: 0.7
+  polar_resolution: 0.2
+  quadrotor_name: quad_0
+  sensing_horizon: 25.0
+  sensing_rate: 10.0
+  uav_num: 3
+  use_avia_pattern: 0
+  use_minicf_pattern: 1
+  use_uav_extra_model: 1
+  use_vlp32_pattern: 0
+  vertical_fov: 90.0
+  yaw_fov: 360.0
+quad0_quadrotor_dynamics:
+  init_state_x: 0.0
+  init_state_y: 0.0
+  init_state_z: 0.0
+  mass: 1.9
+  quadrotor_name: quad_0
+  simulation_rate: 200
+quad1_cascadePID_node:
+  angle_stable_time: 0.5
+  controller_rate: 200
+  damping_ratio: 1.0
+  drone_id: 1
+  init_state_x: 2.0
+  init_state_y: 2.0
+  init_state_yaw: 0.0
+  init_state_z: 0.0
+  max_speed: 3.0
+  quadrotor_name: quad_1
+  start_topic: /start_figure8
+  wait_for_start_signal: false
+quad1_odom_visualization:
+  color:
+    a: 1.0
+    b: 1.0
+    g: 1.0
+    r: 0.0
+  covariance_scale: 100.0
+  drone_id: 1
+  init_x: 2.0
+  init_y: 2.0
+  init_z: 0.0
+  mesh_resource: package://odom_visualization/meshes/yunque.dae
+  quadrotor_name: quad1
+  robot_scale: 1.0
+quad1_pcl_render_node:
+  collision_range: 0.3
+  collisioncheck_enable: 0
+  curvature_limit: 100.0
+  downsample_res: 0.1
+  drone_id: 1
+  dyn_mode: 0
+  dyn_velocity: 1.0
+  dynobj_enable: 0
+  dynobject_num: 10
+  dynobject_size: 0.8
+  estimation_rate: 10.0
+  hash_cubesize: 5.0
+  is_360lidar: 1
+  livox_linestep: 1.4
+  min_raylength: 1.0
+  output_pcd: 0
+  pcl_intensity: 0.7
+  polar_resolution: 0.2
+  quadrotor_name: quad_1
+  sensing_horizon: 25.0
+  sensing_rate: 10.0
+  uav_num: 3
+  use_avia_pattern: 0
+  use_minicf_pattern: 1
+  use_uav_extra_model: 1
+  use_vlp32_pattern: 0
+  vertical_fov: 90.0
+  yaw_fov: 360.0
+quad1_quadrotor_dynamics:
+  init_state_x: 2.0
+  init_state_y: 2.0
+  init_state_z: 0.0
+  mass: 1.9
+  quadrotor_name: quad_1
+  simulation_rate: 200
+quad2_cascadePID_node:
+  angle_stable_time: 0.5
+  controller_rate: 200
+  damping_ratio: 1.0
+  drone_id: 2
+  init_state_x: -2.0
+  init_state_y: 2.0
+  init_state_yaw: 0.0
+  init_state_z: 0.0
+  max_speed: 3.0
+  quadrotor_name: quad_2
+  start_topic: /start_figure8
+  wait_for_start_signal: false
+quad2_odom_visualization:
+  color:
+    a: 1.0
+    b: 1.0
+    g: 1.0
+    r: 0.0
+  covariance_scale: 100.0
+  drone_id: 2
+  init_x: -2.0
+  init_y: 2.0
+  init_z: 0.0
+  mesh_resource: package://odom_visualization/meshes/yunque.dae
+  quadrotor_name: quad2
+  robot_scale: 1.0
+quad2_pcl_render_node:
+  collision_range: 0.3
+  collisioncheck_enable: 0
+  curvature_limit: 100.0
+  downsample_res: 0.1
+  drone_id: 2
+  dyn_mode: 0
+  dyn_velocity: 1.0
+  dynobj_enable: 0
+  dynobject_num: 10
+  dynobject_size: 0.8
+  estimation_rate: 10.0
+  hash_cubesize: 5.0
+  is_360lidar: 1
+  livox_linestep: 1.4
+  min_raylength: 1.0
+  output_pcd: 0
+  pcl_intensity: 0.7
+  polar_resolution: 0.2
+  quadrotor_name: quad_2
+  sensing_horizon: 25.0
+  sensing_rate: 10.0
+  uav_num: 3
+  use_avia_pattern: 0
+  use_minicf_pattern: 1
+  use_uav_extra_model: 1
+  use_vlp32_pattern: 0
+  vertical_fov: 90.0
+  yaw_fov: 360.0
+quad2_quadrotor_dynamics:
+  init_state_x: -2.0
+  init_state_y: 2.0
+  init_state_z: 0.0
+  mass: 1.9
+  quadrotor_name: quad_2
+  simulation_rate: 200
+ros_bridge:
+  drone_id: 0
+  drop_out_of_order: true
+  drop_self: false
+  filter_teammate_only: false
+  log_every_ge: 10
+  log_every_quad: 20
+  max_delay_ms_ge: 400.0
+  max_delay_ms_quad: 400.0
+  queue_size: 50
+  relay_all: true
+  teammate_id: -1
+rosdistro: 'noetic
+
+  '
+roslaunch:
+  uris:
+    host_hr__35501: http://hr:35501/
+    host_hr__36885: http://hr:36885/
+    host_hr__39537: http://hr:39537/
+rosversion: '1.17.0
+
+  '
+run_id: d5147346-4925-11f1-b187-e52ef9e5c619

@@ -236,6 +236,9 @@ public:
     //队友发来的信息是否太陈旧，若是，则不满足匀速模型，无法使用互定位信息
     bool IsDurationShort(const double &lidar_end_time, Teammate &teammate, const int &id);
 
+    bool GetCommRecenterPosition(const int &id, const double &lidar_end_time,
+                                 const V3D &tracker_pos_world, V3D &comm_pos_world);
+
     //Propagate teammate's pose in its own global frame at t_k.
     void PropagateTeammateState(const double &lidar_end_time, Teammate &teammate);
 
@@ -263,7 +266,7 @@ public:
     void ClusterExtractHighIntensity(const double &lidar_end_time, const PointCloudXYZI::Ptr cur_pcl_undistort);
 
 
-    void CheckClusterValidation(const int &id, Teammate &teammate);
+    void CheckClusterValidation(const double &lidar_end_time, const int &id, Teammate &teammate);
 
 
     void PredictTracker(const double &lidar_end_time, const int &id);
@@ -373,6 +376,7 @@ private:
     double valid_temp_cluster_dist_thresh, same_obj_thresh, traj_matching_start_thresh, ave_match_error_thresh;
     double temp_tracker_max_miss_time, traj_time_tolerance, observation_stale_time, traj_match_current_dist_thresh, traj_match_max_error_thresh;
     double temp_tracker_static_max_time, temp_tracker_static_grace_time, temp_tracker_min_motion, static_reject_duration, static_reject_radius;
+    double confirmed_tracker_comm_recenter_after_time, confirmed_tracker_comm_recenter_dist_thresh;
     nav_msgs::Odometry TeammateOdom;
     bool found_all_teammates{false}, cluster_extraction_in_predict_region;
     double text_scale, mesh_scale;

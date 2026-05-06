@@ -2,6 +2,81 @@
 
 本文档用于记录当前 Codex 工作目录下每次代码或参数修改。代码改动、launch/config 参数调整、构建验证结果都应记录在这里，便于之后复现实验和回滚定位。
 
+## 2026-05-06 16:39:53 CST +0800
+
+### 修改背景
+
+用户提供录包分析结果：真实队友附近持续有点云聚类和高反聚类，通信数据正常，但绿框停在旧位置，导致真实队友聚类落在 predict_region 外部，`CheckClusterValidation()` 无法重新关联。最终分类为：B. 有点云聚类，但聚类没有进入 predict_region。
+
+### 修改文件
+
+- `/home/hr/aaworkspace/simulate_test_codex/swarm_lio2_v1/src/swarm_lio2/swarm_lio/src/MultiUAV.h`
+- `/home/hr/aaworkspace/simulate_test_codex/swarm_lio2_v1/src/swarm_lio2/swarm_lio/src/MultiUAV.cpp`
+- `/home/hr/aaworkspace/simulate_test_codex/swarm_lio2_v1/src/swarm_lio2/swarm_lio/src/laserMapping.cpp`
+- `/home/hr/aaworkspace/simulate_test_codex/swarm_lio2_v1/src/swarm_lio2/swarm_lio/config/simulation_gpu.yaml`
+
+### 代码修改
+
+文件：`swarm_lio2_v1/src/swarm_lio2/swarm_lio/src/MultiUAV.h`
+
+- 新增通信重捕获辅助函数声明 `GetCommRecenterPosition(...)`。
+- 新增参数成员 `confirmed_tracker_comm_recenter_after_time` 和 `confirmed_tracker_comm_recenter_dist_thresh`。
+- 修改 `CheckClusterValidation()` 接口，传入 `lidar_end_time`，用于判断 tracker 漏观测时长。
+
+文件：`swarm_lio2_v1/src/swarm_lio2/swarm_lio/src/MultiUAV.cpp`
+
+- 新增 `GetCommRecenterPosition()`：检查队友通信、通信时效、全局外参有效性，以及通信预测位置与当前 tracker 位置的距离。
+- 修改 `ClusterExtractPredictRegion()`：默认仍以本机 confirmed tracker 位置作为 predict_region 中心；当 tracker 漏点云观测超过阈值后，允许使用通信预测位置作为重捕获搜索中心。
+- 修改 `CheckClusterValidation()`：第一优先级仍按 tracker 位置关联聚类；如果失败且 tracker 已经漏观测超过阈值，则以通信预测位置再尝试关联一次。
+- 通信位置只用于搜索窗重定位和聚类重关联，不直接更新 EKF，也不直接作为绿框显示位置。
+
+文件：`swarm_lio2_v1/src/swarm_lio2/swarm_lio/src/laserMapping.cpp`
+
+- 更新 `CheckClusterValidation()` 调用，传入当前帧 `lidar_end_time`。
+
+### 参数修改
+
+文件：`swarm_lio2_v1/src/swarm_lio2/swarm_lio/config/simulation_gpu.yaml`
+
+- 新增 `confirmed_tracker_comm_recenter_after_time: 0.3`
+  - confirmed tracker 漏观测超过 0.3 秒后，允许通信预测参与重捕获。
+- 新增 `confirmed_tracker_comm_recenter_dist_thresh: 2.0`
+  - tracker 与通信预测位置距离超过 2.0 米时拒绝重捕获，避免错误外参把搜索窗拉到远处。
+
+### 验证结果
+
+在目录 `/home/hr/aaworkspace/simulate_test_codex/swarm_lio2_v1` 下执行：
+
+```bash
+catkin_make
+```
+
+结果：
+
+- 编译通过。
+- `swarm_lio` 目标成功链接生成：
+  - `/home/hr/aaworkspace/simulate_test_codex/swarm_lio2_v1/devel/lib/swarm_lio/swarm_lio`
+
+参数展开检查：
+
+```bash
+source swarm_lio2_v1/devel/setup.zsh
+roslaunch swarm_lio simulation_three.launch --dump-params | rg 'confirmed_tracker_comm_recenter|actual_uav_num|valid_cluster_dist_thresh'
+```
+
+结果：
+
+- `quad0/quad1/quad2` 均读取到：
+  - `confirmed_tracker_comm_recenter_after_time: 0.3`
+  - `confirmed_tracker_comm_recenter_dist_thresh: 2.0`
+  - `valid_cluster_dist_thresh: 0.75`
+  - `actual_uav_num: 3`
+
+### 后续实验观察建议
+
+- 如果绿框仍然追不上真实队友，可把 `confirmed_tracker_comm_recenter_after_time` 调低到 `0.15`。
+- 如果绿框被通信重捕获拉到错误区域，可把 `confirmed_tracker_comm_recenter_dist_thresh` 从 `2.0` 降到 `1.2`。
+
 ## 2026-04-29 21:04:34 CST +0800
 
 ### 修改背景
