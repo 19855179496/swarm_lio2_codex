@@ -1,0 +1,54 @@
+<launch>
+    <arg name="goal_rate_hz" default="30.0"/>
+    <arg name="goal_center_x" default="0.0"/>
+    <arg name="goal_center_y" default="0.0"/>
+    <arg name="goal_height_z" default="1.2"/>
+    <arg name="goal_amp_x" default="3.0"/>
+    <arg name="goal_amp_y" default="1.8"/>
+    <arg name="goal_omega" default="0.35"/>
+    <arg name="goal_start_delay" default="3.0"/>
+    <arg name="wait_for_start_signal" default="true"/>
+    <arg name="start_topic" default="/start_figure8"/>
+    <arg name="hold_x" default="0.0"/>
+    <arg name="hold_y" default="0.0"/>
+    <arg name="hold_z" default="0.0"/>
+    <arg name="init_z_0" default="0.0"/>
+    <arg name="init_z_1" default="0.0"/>
+    <arg name="init_z_2" default="0.0"/>
+    <arg name="position_cmd_topic_0" default="/disabled/quad_0/planning/pos_cmd"/>
+    <arg name="position_cmd_topic_1" default="/disabled/quad_1/planning/pos_cmd"/>
+    <arg name="position_cmd_topic_2" default="/disabled/quad_2/planning/pos_cmd"/>
+
+    <include file="$(find test_interface)/launch/triple_drone_mid360.launch">
+        <arg name="init_z_0" value="$(arg init_z_0)"/>
+        <arg name="init_z_1" value="$(arg init_z_1)"/>
+        <arg name="init_z_2" value="$(arg init_z_2)"/>
+        <arg name="position_cmd_topic_0" value="$(arg position_cmd_topic_0)"/>
+        <arg name="position_cmd_topic_1" value="$(arg position_cmd_topic_1)"/>
+        <arg name="position_cmd_topic_2" value="$(arg position_cmd_topic_2)"/>
+        <arg name="wait_for_start_signal" value="$(arg wait_for_start_signal)"/>
+        <arg name="start_topic" value="$(arg start_topic)"/>
+    </include>
+
+    <node pkg="test_interface"
+          type="figure8_goal_publisher.py"
+          name="figure8_goal_publisher"
+          output="screen">
+        <param name="topic" value="/goal"/>
+        <param name="frame_id" value="world"/>
+        <param name="rate_hz" value="$(arg goal_rate_hz)"/>
+        <param name="center_x" value="$(arg goal_center_x)"/>
+        <param name="center_y" value="$(arg goal_center_y)"/>
+        <param name="height_z" value="$(arg goal_height_z)"/>
+        <param name="amp_x" value="$(arg goal_amp_x)"/>
+        <param name="amp_y" value="$(arg goal_amp_y)"/>
+        <param name="omega" value="$(arg goal_omega)"/>
+        <param name="start_delay" value="$(arg goal_start_delay)"/>
+        <param name="wait_for_start_signal" value="$(arg wait_for_start_signal)"/>
+        <param name="start_topic" value="$(arg start_topic)"/>
+        <param name="hold_x" value="$(arg hold_x)"/>
+        <param name="hold_y" value="$(arg hold_y)"/>
+        <param name="hold_z" value="$(arg hold_z)"/>
+        <param name="publish_yaw_tangent" value="true"/>
+    </node>
+</launch>
