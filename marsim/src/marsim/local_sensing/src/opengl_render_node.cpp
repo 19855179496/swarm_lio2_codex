@@ -20,7 +20,7 @@
 using namespace Eigen;
 using namespace std;
 
-#define MAX_INTENSITY 1
+#define MAX_INTENSITY 0.5
 #define MIN_INTENSITY 0.1
 
 string file_name, pkg_path;

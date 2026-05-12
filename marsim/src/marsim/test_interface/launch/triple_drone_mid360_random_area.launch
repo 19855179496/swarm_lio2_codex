@@ -1,0 +1,67 @@
+<launch>
+    <!-- Three drones random-walk in independent 3D boxes after receiving start signal. -->
+    <arg name="goal_rate_hz" default="30.0"/>
+    <arg name="goal_start_delay" default="3.0"/>
+    <arg name="wait_for_start_signal" default="true"/>
+    <arg name="start_topic" default="/start_figure8"/>
+    <arg name="seed" default="20260512"/>
+
+    <arg name="speed_min" default="0.4"/>
+    <arg name="speed_max" default="1.2"/>
+    <arg name="min_target_step" default="0.8"/>
+    <arg name="reach_radius" default="0.25"/>
+    <arg name="hold_time" default="0.5"/>
+    <arg name="min_pair_distance" default="1.0"/>
+
+    <arg name="init_z_0" default="0.0"/>
+    <arg name="init_z_1" default="0.0"/>
+    <arg name="init_z_2" default="0.0"/>
+    <arg name="position_cmd_topic_0" default="/quad_0/planning/pos_cmd"/>
+    <arg name="position_cmd_topic_1" default="/quad_1/planning/pos_cmd"/>
+    <arg name="position_cmd_topic_2" default="/quad_2/planning/pos_cmd"/>
+
+    <include file="$(find test_interface)/launch/triple_drone_mid360.launch">
+        <arg name="init_z_0" value="$(arg init_z_0)"/>
+        <arg name="init_z_1" value="$(arg init_z_1)"/>
+        <arg name="init_z_2" value="$(arg init_z_2)"/>
+        <arg name="position_cmd_topic_0" value="$(arg position_cmd_topic_0)"/>
+        <arg name="position_cmd_topic_1" value="$(arg position_cmd_topic_1)"/>
+        <arg name="position_cmd_topic_2" value="$(arg position_cmd_topic_2)"/>
+        <arg name="wait_for_start_signal" value="$(arg wait_for_start_signal)"/>
+        <arg name="start_topic" value="$(arg start_topic)"/>
+    </include>
+
+    <node pkg="test_interface"
+          type="triple_random_area_mission_publisher.py"
+          name="triple_random_area_mission_publisher"
+          output="screen">
+        <param name="frame_id" value="world"/>
+        <param name="rate_hz" value="$(arg goal_rate_hz)"/>
+        <param name="start_delay" value="$(arg goal_start_delay)"/>
+        <param name="wait_for_start_signal" value="$(arg wait_for_start_signal)"/>
+        <param name="start_topic" value="$(arg start_topic)"/>
+        <param name="publish_yaw_tangent" value="true"/>
+        <param name="seed" value="$(arg seed)"/>
+
+        <param name="topic_uav0" value="$(arg position_cmd_topic_0)"/>
+        <param name="topic_uav1" value="$(arg position_cmd_topic_1)"/>
+        <param name="topic_uav2" value="$(arg position_cmd_topic_2)"/>
+
+        <param name="hold_uav0" value="[0.0, 0.0, 1.2]"/>
+        <param name="hold_uav1" value="[2.0, 2.0, 1.2]"/>
+        <param name="hold_uav2" value="[-2.0, 2.0, 1.2]"/>
+
+        <param name="region_uav0" value="[-3.0, 3.0, -3.0, 3.0, 1.0, 2.0]"/>
+        <param name="region_uav1" value="[-1.0, 5.0, -1.0, 5.0, 1.0, 2.2]"/>
+        <param name="region_uav2" value="[-5.0, 1.0, -1.0, 5.0, 1.0, 2.4]"/>
+
+        <param name="speed_min" value="$(arg speed_min)"/>
+        <param name="speed_max" value="$(arg speed_max)"/>
+        <param name="min_target_step" value="$(arg min_target_step)"/>
+        <param name="reach_radius" value="$(arg reach_radius)"/>
+        <param name="hold_time" value="$(arg hold_time)"/>
+        <param name="min_pair_distance" value="$(arg min_pair_distance)"/>
+        <param name="kx" value="[7.0, 7.0, 6.2]"/>
+        <param name="kv" value="[4.0, 4.0, 4.0]"/>
+    </node>
+</launch>

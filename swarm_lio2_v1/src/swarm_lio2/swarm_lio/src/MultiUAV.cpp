@@ -47,6 +47,56 @@ Multi_UAV::Multi_UAV(const ros::NodeHandle &nh, const int & drone_id_) {
     LoadParam("multiuav/valid_cluster_size_thresh", valid_cluster_size_thresh, 0.6);
     LoadParam("multiuav/valid_cluster_dist_thresh", valid_cluster_dist_thresh, 0.35);
     LoadParam("multiuav/actual_uav_num", actual_uav_num, 4);
+    if (!LoadParam("multiuav/use_initial_extrinsic_prior", use_initial_extrinsic_prior, false))
+        LoadParam("multiuav/use_uav0_extrinsic_prior", use_initial_extrinsic_prior, false);
+    LoadParam("multiuav/extrinsic_prior_trans_update_thresh", extrinsic_prior_trans_update_thresh, 0.6);
+    LoadParam("multiuav/extrinsic_prior_rot_update_thresh_deg", extrinsic_prior_rot_update_thresh_deg, 10.0);
+    LoadParam("multiuav/extrinsic_prior_alpha", extrinsic_prior_alpha, 0.2);
+    if (extrinsic_prior_alpha < 0.0)
+        extrinsic_prior_alpha = 0.0;
+    if (extrinsic_prior_alpha > 1.0)
+        extrinsic_prior_alpha = 1.0;
+
+    for (int i = 0; i < MAX_UAV_NUM; ++i) {
+        has_initial_pos_in_uav0[i] = false;
+        initial_pos_in_uav0[i] = Zero3d;
+    }
+    has_initial_pos_in_uav0[0] = true;
+    vector<double> init_pos_flat;
+    if (nh_.getParam("multiuav/initial_positions_in_uav0", init_pos_flat) ||
+        nh_.getParam("multiuav/uav0_initial_positions", init_pos_flat)) {
+        if (init_pos_flat.size() % 4 != 0) {
+            cout << YELLOW << " -- [Initial Extrinsic Prior] Invalid initial position list size: "
+                 << init_pos_flat.size() << " (must be 4*N: [id,x,y,z,...])" << RESET << endl;
+        } else {
+            for (size_t k = 0; k + 3 < init_pos_flat.size(); k += 4) {
+                int id = int(init_pos_flat[k] + (init_pos_flat[k] >= 0.0 ? 0.5 : -0.5));
+                if (id < 0 || id >= MAX_UAV_NUM) {
+                    cout << YELLOW << " -- [Initial Extrinsic Prior] Skip invalid id: " << id << RESET << endl;
+                    continue;
+                }
+                has_initial_pos_in_uav0[id] = true;
+                initial_pos_in_uav0[id] = V3D(init_pos_flat[k + 1], init_pos_flat[k + 2], init_pos_flat[k + 3]);
+                cout << GREEN << " -- [Initial Extrinsic Prior] UAV" << id << " pos in UAV0 "
+                     << initial_pos_in_uav0[id].transpose() << RESET << endl;
+            }
+        }
+    }
+    for (int id = 0; id < MAX_UAV_NUM; ++id) {
+        vector<double> pos_xyz;
+        string key = "multiuav/initial_pos_uav" + SetString(id) + "_in_uav0";
+        if (nh_.getParam(key, pos_xyz)) {
+            if (pos_xyz.size() == 3) {
+                has_initial_pos_in_uav0[id] = true;
+                initial_pos_in_uav0[id] = V3D(pos_xyz[0], pos_xyz[1], pos_xyz[2]);
+                cout << GREEN << " -- [Initial Extrinsic Prior] " << key << " = "
+                     << initial_pos_in_uav0[id].transpose() << RESET << endl;
+            } else {
+                cout << YELLOW << " -- [Initial Extrinsic Prior] Invalid " << key
+                     << " size: " << pos_xyz.size() << " (must be 3)" << RESET << endl;
+            }
+        }
+    }
 
     string sub_quadstate_topic_name = "/quadstate_from_teammate";
     string sub_global_extrinsic_topic_name = "/global_extrinsic_from_teammate";
@@ -106,6 +156,65 @@ Multi_UAV::Multi_UAV(const ros::NodeHandle &nh, const int & drone_id_) {
     degenerated = false;
     teammate_id_by_traj_matching.clear();
     rejected_static_objects.clear();
+}
+
+bool Multi_UAV::GetInitialExtrinsicPrior(const int &id, M3D &prior_rot, V3D &prior_trans) {
+    if (!use_initial_extrinsic_prior)
+        return false;
+    if (id == drone_id || id < 0 || id >= MAX_UAV_NUM || drone_id < 0 || drone_id >= MAX_UAV_NUM)
+        return false;
+    if (!has_initial_pos_in_uav0[drone_id] || !has_initial_pos_in_uav0[id])
+        return false;
+
+    prior_rot = M3D::Identity();
+    prior_trans = initial_pos_in_uav0[id] - initial_pos_in_uav0[drone_id];
+    return true;
+}
+
+void Multi_UAV::ApplyInitialExtrinsicPriorToState() {
+    for (int id = 0; id < MAX_UAV_NUM; ++id) {
+        M3D prior_rot = M3D::Identity();
+        V3D prior_trans = Zero3d;
+        if (!GetInitialExtrinsicPrior(id, prior_rot, prior_trans))
+            continue;
+        if (state.global_extrinsic_trans[id].norm() < 0.001) {
+            state.global_extrinsic_rot[id] = prior_rot;
+            state.global_extrinsic_trans[id] = prior_trans;
+        }
+    }
+}
+
+void Multi_UAV::FuseEstimatedExtrinsicWithPrior(const int &id, const M3D &est_rot, const V3D &est_trans,
+                                                M3D &fused_rot, V3D &fused_trans, bool &accepted_update) {
+    fused_rot = est_rot;
+    fused_trans = est_trans;
+    accepted_update = true;
+    M3D prior_rot = M3D::Identity();
+    V3D prior_trans = Zero3d;
+    if (!GetInitialExtrinsicPrior(id, prior_rot, prior_trans))
+        return;
+
+    V3D base_trans = state.global_extrinsic_trans[id];
+    M3D base_rot = state.global_extrinsic_rot[id];
+    if (base_trans.norm() < 0.001) {
+        base_trans = prior_trans;
+        base_rot = prior_rot;
+    }
+
+    double trans_diff = (est_trans - base_trans).norm();
+    M3D dR = base_rot.transpose() * est_rot;
+    double rot_diff_deg = Log(dR).norm() * 57.3;
+    if (trans_diff > extrinsic_prior_trans_update_thresh || rot_diff_deg > extrinsic_prior_rot_update_thresh_deg) {
+        accepted_update = false;
+        fused_rot = base_rot;
+        fused_trans = base_trans;
+        return;
+    }
+
+    M3D dR_base_to_est = base_rot.transpose() * est_rot;
+    V3D dtheta = Log(dR_base_to_est) * extrinsic_prior_alpha;
+    fused_rot = base_rot * Exp(dtheta(0), dtheta(1), dtheta(2));
+    fused_trans = (1.0 - extrinsic_prior_alpha) * base_trans + extrinsic_prior_alpha * est_trans;
 }
 
 Multi_UAV::~Multi_UAV(){
@@ -284,14 +393,61 @@ void Multi_UAV::UpdateFactorGraph(const bool &print_log) {
     if (found_all_teammates)
         return;
 
+    M3D prev_rot[MAX_UAV_NUM];
+    V3D prev_trans[MAX_UAV_NUM];
+    for (int id = 0; id < MAX_UAV_NUM; ++id) {
+        prev_rot[id] = state.global_extrinsic_rot[id];
+        prev_trans[id] = state.global_extrinsic_trans[id];
+    }
     TimeConsuming time_graph("Solve Graph");
     extrinsic_infection.SolveGraphIsam2(state);
+    if (use_initial_extrinsic_prior) {
+        for (int id = 0; id < MAX_UAV_NUM; ++id) {
+            M3D prior_rot = M3D::Identity();
+            V3D prior_trans = Zero3d;
+            if (!GetInitialExtrinsicPrior(id, prior_rot, prior_trans))
+                continue;
+            V3D base_trans = prev_trans[id];
+            M3D base_rot = prev_rot[id];
+            if (base_trans.norm() < 0.001) {
+                base_trans = prior_trans;
+                base_rot = prior_rot;
+            }
+            if (state.global_extrinsic_trans[id].norm() < 0.001) {
+                state.global_extrinsic_rot[id] = base_rot;
+                state.global_extrinsic_trans[id] = base_trans;
+                continue;
+            }
+            double trans_diff = (state.global_extrinsic_trans[id] - base_trans).norm();
+            M3D dR_base_to_est = base_rot.transpose() * state.global_extrinsic_rot[id];
+            double rot_diff_deg = Log(dR_base_to_est).norm() * 57.3;
+            if (trans_diff > extrinsic_prior_trans_update_thresh || rot_diff_deg > extrinsic_prior_rot_update_thresh_deg) {
+                state.global_extrinsic_rot[id] = base_rot;
+                state.global_extrinsic_trans[id] = base_trans;
+                if (print_log) {
+                    cout << YELLOW << " -- [Initial Extrinsic Prior] Reject graph jump for id " << id
+                         << ", dt=" << trans_diff << "m, dr=" << rot_diff_deg << "deg" << RESET << endl;
+                }
+            } else {
+                M3D dR = base_rot.transpose() * state.global_extrinsic_rot[id];
+                V3D dtheta = Log(dR) * extrinsic_prior_alpha;
+                state.global_extrinsic_rot[id] = base_rot * Exp(dtheta(0), dtheta(1), dtheta(2));
+                state.global_extrinsic_trans[id] =
+                        (1.0 - extrinsic_prior_alpha) * base_trans + extrinsic_prior_alpha * state.global_extrinsic_trans[id];
+            }
+            if (state.global_extrinsic_trans[id].norm() < 0.001) {
+                state.global_extrinsic_rot[id] = prior_rot;
+                state.global_extrinsic_trans[id] = prior_trans;
+            }
+        }
+    }
     if (print_log)
         cout << " -- [Graph Solve Time] " << time_graph.stop() * 1000 << " ms"<< endl;
 }
 
 void Multi_UAV::UpdateGlobalExtrinsicAndCreateNewTeammateTracker(StatesGroup &state_in, const double &lidar_end_time) {
     double noise = 1e-6;
+    ApplyInitialExtrinsicPriorToState();
     for (auto iter = teammates.begin(); iter != teammates.end(); ++iter) {
         int id = iter->first;
         auto &teammate = iter->second;
@@ -1264,8 +1420,16 @@ bool Multi_UAV::CreateTeammateTracker(const double &lidar_end_time, const int &i
                     
                     cout << BOLDMAGENTA << "R: " << RotMtoEuler(rot).transpose() * 57.3 << " deg" << endl
                          << "t: " << trans.transpose() << " m" << RESET << endl;
-                    state.global_extrinsic_rot[id] = state_prop.global_extrinsic_rot[id] = rot;
-                    state.global_extrinsic_trans[id] = state_prop.global_extrinsic_trans[id] = trans;
+                    M3D fused_rot = rot;
+                    V3D fused_trans = trans;
+                    bool accepted_update = true;
+                    FuseEstimatedExtrinsicWithPrior(id, rot, trans, fused_rot, fused_trans, accepted_update);
+                    state.global_extrinsic_rot[id] = state_prop.global_extrinsic_rot[id] = fused_rot;
+                    state.global_extrinsic_trans[id] = state_prop.global_extrinsic_trans[id] = fused_trans;
+                    if (!accepted_update && print_log) {
+                        cout << YELLOW << " -- [Initial Extrinsic Prior] Reject big jump for id " << id
+                             << ", keep prior/base extrinsic." << RESET << endl;
+                    }
 
                     state.cov.block<6, 6>(18 + 6 * id, 18 + 6 * id) = noise * Matrix<double, 6, 6>::Identity();
                     state_prop.cov.block<6, 6>(18 + 6 * id, 18 + 6 * id) = noise * Matrix<double, 6, 6>::Identity();
@@ -1280,8 +1444,8 @@ bool Multi_UAV::CreateTeammateTracker(const double &lidar_end_time, const int &i
                     mars::EdgeData edge;
                     edge.from = drone_id;
                     edge.to = id;
-                    edge.rotation = rot;
-                    edge.translation = trans;
+                    edge.rotation = fused_rot;
+                    edge.translation = fused_trans;
                     extrinsic_infection.simple_graph.AddEdge(edge);
 
                     //Add to list

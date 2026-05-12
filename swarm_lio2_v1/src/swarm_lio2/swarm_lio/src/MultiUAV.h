@@ -238,6 +238,10 @@ public:
 
     bool GetCommRecenterPosition(const int &id, const double &lidar_end_time,
                                  const V3D &tracker_pos_world, V3D &comm_pos_world);
+    void ApplyInitialExtrinsicPriorToState();
+    bool GetInitialExtrinsicPrior(const int &id, M3D &prior_rot, V3D &prior_trans);
+    void FuseEstimatedExtrinsicWithPrior(const int &id, const M3D &est_rot, const V3D &est_trans,
+                                         M3D &fused_rot, V3D &fused_trans, bool &accepted_update);
 
     //Propagate teammate's pose in its own global frame at t_k.
     void PropagateTeammateState(const double &lidar_end_time, Teammate &teammate);
@@ -377,6 +381,12 @@ private:
     double temp_tracker_max_miss_time, traj_time_tolerance, observation_stale_time, traj_match_current_dist_thresh, traj_match_max_error_thresh;
     double temp_tracker_static_max_time, temp_tracker_static_grace_time, temp_tracker_min_motion, static_reject_duration, static_reject_radius;
     double confirmed_tracker_comm_recenter_after_time, confirmed_tracker_comm_recenter_dist_thresh;
+    bool use_initial_extrinsic_prior{false};
+    double extrinsic_prior_trans_update_thresh{0.6};
+    double extrinsic_prior_rot_update_thresh_deg{10.0};
+    double extrinsic_prior_alpha{0.2};
+    bool has_initial_pos_in_uav0[MAX_UAV_NUM] = {false};
+    V3D initial_pos_in_uav0[MAX_UAV_NUM];
     nav_msgs::Odometry TeammateOdom;
     bool found_all_teammates{false}, cluster_extraction_in_predict_region;
     double text_scale, mesh_scale;

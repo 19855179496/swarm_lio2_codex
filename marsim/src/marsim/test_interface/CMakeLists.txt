@@ -140,6 +140,7 @@ catkin_install_python(PROGRAMS
   scripts/figure8_goal_publisher.py
   scripts/dual_waypoint_mission_publisher.py
   scripts/triple_waypoint_mission_publisher.py
+  scripts/triple_random_area_mission_publisher.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

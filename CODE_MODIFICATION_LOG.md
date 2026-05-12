@@ -2,6 +2,33 @@
 
 本文档用于记录当前 Codex 工作目录下每次代码或参数修改。代码改动、launch/config 参数调整、构建验证结果都应记录在这里，便于之后复现实验和回滚定位。
 
+## 2026-05-12 21:46:11 CST
+
+### 第10次修改
+
+### 修改目标
+
+将原先只对 UAV0 生效的初始外参先验，改为三机通用的“初始编队位置先验”：配置中给出各无人机在 UAV0 坐标系下的初始位置，每个无人机节点根据自身 `drone_id` 自动计算自己到其他无人机的外参。
+
+### 修改文件
+
+- `swarm_lio2_v1/src/swarm_lio2/swarm_lio/src/MultiUAV.h`
+- `swarm_lio2_v1/src/swarm_lio2/swarm_lio/src/MultiUAV.cpp`
+- `swarm_lio2_v1/src/swarm_lio2/swarm_lio/config/simulation_gpu.yaml`
+
+### 修改内容
+
+- 新增通用参数 `use_initial_extrinsic_prior` 和 `initial_positions_in_uav0`。
+- 将初始外参计算规则改为 `T_i_j.translation = p_j_in_uav0 - p_i_in_uav0`，旋转先验为单位阵。
+- UAV0、UAV1、UAV2 都会根据同一份初始位置配置计算自己的队友外参，不再只依赖 UAV0 发布外参后传播。
+- 后续轨迹匹配估计出的外参仍会经过平移/旋转门限检查，超过阈值时拒绝跳变，未超过阈值时按 `extrinsic_prior_alpha` 低通融合。
+- 保留旧参数 `use_uav0_extrinsic_prior` 和 `uav0_initial_positions` 的兼容读取，方便旧配置临时回退。
+
+### 验证结果
+
+- 已执行 `source swarm_lio2_v1/devel/setup.zsh && catkin_make -C swarm_lio2_v1 --pkg swarm_lio`。
+- 编译通过，`swarm_lio` 目标成功链接生成。
+
 ## 2026-05-06 16:39:53 CST +0800
 
 ### 修改背景
