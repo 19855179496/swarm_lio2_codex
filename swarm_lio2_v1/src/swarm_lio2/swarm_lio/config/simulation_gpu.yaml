@@ -133,22 +133,29 @@ multiuav:
     actual_uav_num: 3
 
     # 是否启用“初始编队外参先验”。
-    # 启用后：每架无人机都会根据 UAV0 坐标系下的初始位置，自动计算自己到其他无人机的外参。
+    # 启用后：先验只用于轨迹激励足够、已经估计出外参后的准入门控，以及后续图优化外参跳变约束；
+    # 不会辅助未确认队友的 predict region，也不会仅凭初始外参和通信 odom 直接创建 confirmed teammate tracker。
     use_initial_extrinsic_prior: true
 
-    # UAV0 坐标系下各无人机初始位置，扁平格式 [id, x, y, z, id, x, y, z, ...]。
-    # 例：UAV i 到 UAV j 的初始外参平移为 p_j_in_uav0 - p_i_in_uav0，旋转先验为单位阵。
-    initial_positions_in_uav0: [0, 0.0, 0.0, 0.0, 1, 1.92, 1.88, 0.0, 2, -1.87, 1.95, 0.0]
+    # UAV0 坐标系下各无人机初始位姿，扁平格式：
+    # [id, x, y, z, roll_deg, pitch_deg, yaw_deg, id, x, y, z, roll_deg, pitch_deg, yaw_deg, ...]
+    # 例：UAV i 到 UAV j 的初始外参为 inv(T_0_i) * T_0_j。
+    initial_poses_in_uav0: [0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+                            1, 1.92, 1.88, 0.0, 0.0, 0.0, 0.0, 
+                            2, -1.87, 1.95, 0.0, 0.0, 0.0, 0.0]
     # 也支持按无人机单独配置：
     # initial_pos_uav0_in_uav0: [0.0, 0.0, 0.0]
+    # initial_rot_deg_uav0_in_uav0: [0.0, 0.0, 0.0]
     # initial_pos_uav1_in_uav0: [2.0, 2.0, 0.0]
+    # initial_rot_deg_uav1_in_uav0: [0.0, 0.0, 0.0]
     # initial_pos_uav2_in_uav0: [-2.0, 2.0, 0.0]
+    # initial_rot_deg_uav2_in_uav0: [0.0, 0.0, 0.0]
 
     # 后续估计外参与当前基准相比，超过该平移阈值(米)则拒绝本次更新。
     extrinsic_prior_trans_update_thresh: 0.6
     # 后续估计外参与当前基准相比，超过该旋转阈值(度)则拒绝本次更新。
     extrinsic_prior_rot_update_thresh_deg: 10.0
-    # 通过门限时的融合系数(0~1)，越小越保守，越大越跟随最新估计。
+    # 保留参数：当前策略通过门限时直接使用估计外参，超过门限时回退初始外参。
     extrinsic_prior_alpha: 0.2
 
     # 退化阈值。

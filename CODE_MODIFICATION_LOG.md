@@ -2,6 +2,63 @@
 
 本文档用于记录当前 Codex 工作目录下每次代码或参数修改。代码改动、launch/config 参数调整、构建验证结果都应记录在这里，便于之后复现实验和回滚定位。
 
+## 2026-05-12 22:28:24 CST
+
+### 第12次修改
+
+### 修改目标
+
+进一步收紧初始外参先验的使用范围：初始外参不再用于未确认队友的 predict region 辅助，只在临时 tracker 轨迹激励达到阈值、轨迹匹配已经估计出外参之后，作为是否允许红框确认成绿框的门控；confirmed 后图优化得到的外参若偏离初始先验超过阈值，则回退使用初始外参。
+
+### 修改文件
+
+- `swarm_lio2_v1/src/swarm_lio2/swarm_lio/src/MultiUAV.h`
+- `swarm_lio2_v1/src/swarm_lio2/swarm_lio/src/MultiUAV.cpp`
+- `swarm_lio2_v1/src/swarm_lio2/swarm_lio/config/simulation_gpu.yaml`
+
+### 修改内容
+
+- 移除第11次修改中添加的“初始先验辅助未确认队友 predict region”逻辑。
+- `ClusterExtractPredictRegion()` 恢复为只围绕已有 temp tracker 和 confirmed teammate tracker 聚类，不使用初始外参为未确认队友开搜索窗。
+- `FuseEstimatedExtrinsicWithPrior()` 改为直接比较轨迹匹配估计外参与初始外参先验；超过 `extrinsic_prior_trans_update_thresh` 或 `extrinsic_prior_rot_update_thresh_deg` 时拒绝。
+- `CreateTeammateTracker()` 在轨迹匹配估计外参被先验门控拒绝时，不再创建 teammate tracker，也不会把红框变成绿框。
+- `UpdateFactorGraph()` 中图优化外参若偏离初始先验超过阈值，则将 `state.global_extrinsic_*` 回退为初始外参；若未超过阈值，则保留估计外参。
+- 配置注释更新为：当前策略通过门限时直接使用估计外参，超过门限时回退初始外参。
+
+### 验证结果
+
+- 已执行 `source swarm_lio2_v1/devel/setup.zsh && catkin_make -C swarm_lio2_v1 --pkg swarm_lio`。
+- 编译通过，`swarm_lio` 目标成功链接生成。
+
+## 2026-05-12 22:13:41 CST
+
+### 第11次修改
+
+### 修改目标
+
+收紧初始外参先验的使用方式：初始外参只用于未确认队友的 predict region 辅助和后续轨迹匹配外参的跳变约束，不再仅凭初始外参和通信 odom 直接创建 confirmed teammate tracker；同时把初始外参配置从仅平移扩展为包含旋转的初始位姿。
+
+### 修改文件
+
+- `swarm_lio2_v1/src/swarm_lio2/swarm_lio/src/MultiUAV.h`
+- `swarm_lio2_v1/src/swarm_lio2/swarm_lio/src/MultiUAV.cpp`
+- `swarm_lio2_v1/src/swarm_lio2/swarm_lio/config/simulation_gpu.yaml`
+
+### 修改内容
+
+- 新增 `initial_poses_in_uav0` 配置格式：`[id, x, y, z, roll_deg, pitch_deg, yaw_deg, ...]`。
+- `GetInitialExtrinsicPrior()` 改为按 `inv(T_0_i) * T_0_j` 计算相对外参，旋转为 `R_0_i^T * R_0_j`，平移为 `R_0_i^T * (p_0_j - p_0_i)`。
+- 移除启动时把初始先验直接写入 `state.global_extrinsic_*` 的逻辑，避免静止状态下仅凭通信和配置直接生成绿框。
+- `UpdateGlobalExtrinsicAndCreateNewTeammateTracker()` 只同步已有外参到滤波状态，不再自动创建 teammate tracker。
+- `ClusterExtractPredictRegion()` 对尚未 confirmed 的队友使用初始先验和通信 odom 生成辅助搜索窗，把附近聚类纳入后续检测。
+- 初始先验搜索窗附近的高反聚类仍会进入 `temp_tracker` 红框阶段；红框变绿仍需经过 LiDAR 临时跟踪、轨迹激励和轨迹匹配。
+- 避免同一个高反聚类在已有 temp tracker 附近重复创建临时 tracker。
+
+### 验证结果
+
+- 已执行 `source swarm_lio2_v1/devel/setup.zsh && catkin_make -C swarm_lio2_v1 --pkg swarm_lio`。
+- 编译通过，`swarm_lio` 目标成功链接生成。
+
 ## 2026-05-12 21:46:11 CST
 
 ### 第10次修改

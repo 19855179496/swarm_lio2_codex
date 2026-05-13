@@ -238,7 +238,6 @@ public:
 
     bool GetCommRecenterPosition(const int &id, const double &lidar_end_time,
                                  const V3D &tracker_pos_world, V3D &comm_pos_world);
-    void ApplyInitialExtrinsicPriorToState();
     bool GetInitialExtrinsicPrior(const int &id, M3D &prior_rot, V3D &prior_trans);
     void FuseEstimatedExtrinsicWithPrior(const int &id, const M3D &est_rot, const V3D &est_trans,
                                          M3D &fused_rot, V3D &fused_trans, bool &accepted_update);
@@ -387,6 +386,7 @@ private:
     double extrinsic_prior_alpha{0.2};
     bool has_initial_pos_in_uav0[MAX_UAV_NUM] = {false};
     V3D initial_pos_in_uav0[MAX_UAV_NUM];
+    M3D initial_rot_in_uav0[MAX_UAV_NUM];
     nav_msgs::Odometry TeammateOdom;
     bool found_all_teammates{false}, cluster_extraction_in_predict_region;
     double text_scale, mesh_scale;
